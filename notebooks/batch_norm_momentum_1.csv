@@ -1,0 +1,1 @@
+filter_scaling,depth,batchsize,fold,bn_momentum,highest_val_acc,lowest_val_loss,threshold_max,mAP_max,threshold_max_augmentation,mAP_max_augmentation
