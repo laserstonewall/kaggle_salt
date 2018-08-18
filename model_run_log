@@ -1,0 +1,1303 @@
+184.105.84.180
+
+100/100 [==============================] - 60s 599ms/step - loss: 2.1074 - rpn_class_loss: 0.0223 - rpn_bbox_loss: 1.0299 - mrcnn_class_loss: 0.0802 - mrcnn_bbox_loss: 0.4130 - mrcnn_mask_loss: 0.5619 - val_loss: 2.1024 - val_rpn_class_loss: 0.0205 - val_rpn_bbox_loss: 1.0561 - val_mrcnn_class_loss: 0.0642 - val_mrcnn_bbox_loss: 0.3730 - val_mrcnn_mask_loss: 0.5886
+
+Training with only the dense layers trainable ("heads"):
+	Shoot, I used [0.5, 0.55] for this:
+	After 20 epochs: 
+		mAP:  0.32083771594313765
+	After 40 epochs:
+		mAP:  0.5253984190731179
+
+	With all correct thresholds:
+		[0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95]
+	After 20 epochs: 
+		mAP: 0.23082735704723656
+	After 40 epochs:
+		mAP: 0.3835631414547077
+	After 100 epochs:
+		mAP: 0.4809286653517423
+	After 200 epochs:
+		mAP: 0.5444444444444444
+
+	It always seems to be finding 2 salt cases in the example classifications that I randomly run each time. That implies to me that perhaps I am setting up the classes improperly such that it always thinks it needs to find two classes.
+
+	Also, I believe I may need to set up more proposed areas, it seems to be finding very square shapes, and I believe increasing the number or decreasing the size of the region proposals could help this.
+
+	The labeling still SEEMS to be OK, based on how they did it for the nucleus. No matter what we have a mask, that mask just happens to be empty sometimes. HMMMMM.
+
+	Let's try 2 experiments. First, make the top layers of the resnet trainable. Then for one experiment we start from scratch for 200 epochs, the second we start from a 200 epoch "heads" trained model. Perhaps this initialization will help?
+
+Training from scratch, trainable layers "5+":
+	After 100 epochs:
+		mAP: 0.5494438182899721
+	After 200 epochs:
+		mAP: 0.5611932938856016
+
+Training starting at heads epoch 200, then training with "5+":
+	After 100 epochs (300 total):
+		mAP: 0.5625575279421434
+
+Training from scratch, trainable layers "4+":
+	After 100 epochs:
+		mAP: 0.5962524654832347
+
+Training from scratch, trainable layers "5+", ROIs = 64:
+	After 100 epochs:
+		mAP: 0.5317948717948718
+
+Things to try:
+	More training epochs on 4+ model
+	Different parameters of ROIs (maybe on faster models like 5+ or heads, then use on 4+)
+	Test training of 3+, all. There does training from beginning help, should we use a starting point for the heads?
+	ImageNet weights instead of COCO weights.
+	Different weights?
+	Different starting net (resnet50 vs. resnet 101)
+	Image augmentation
+	Adjust image means
+	
+Submissions:
+mask_rcnn_salt_4_plus_epochs_100_submission : Received score XX, despite 0.59 in calculated mAP. From the "Training from scratch, trainable layers "4+"" run.
+
+mask_rcnn_salt_4_plus_epochs_100_transpose_submission : Same model as previous. but realized that I had my run length encoding transpose of what it should be to match Kaggle, e.g. we go down first, then iterate across. 
+
+
+UNET Starts Here:
+
+Have built my own Unet, but still doesn't seem to be training up very well. The depth can automatically be set, as well as the convolutions. 
+
+Steps:
+	1. Need to figure out if my metric is correct, get it working as compared to metrics on the lines.
+	2. Need to figure out whether this UNet model I am following actually does well or not in my metric. If so, what is different about my UNet model?
+
+UNet Submissions: (note, I corrected threshold and mAP max after correcting my IoU, and finally getting scores that matched my submissions)
+1:
+	filter_scaling = 32
+	depth = 5
+	batch_size = 32
+	early_stopping = EarlyStopping(patience=10, verbose=1)
+	model_checkpoint = ModelCheckpoint("./keras.model", save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.1, patience=5, min_lr=0.00001, verbose=1)
+	generator_dict = {'horizontal_flip': True,
+	                  'vertical_flip': True}
+  	threshold_max = 0.7755102040816326
+  	mAP_max = 0.483
+  	Total params: 8,629,921
+	Trainable params: 8,629,921
+	Non-trainable params: 0
+	Highest val_acc: 0.902
+	Score = 0.366
+2: 
+	filter_scaling = 16
+	depth = 5
+	batch_size = 32
+	early_stopping = EarlyStopping(patience=10, verbose=1)
+	model_checkpoint = ModelCheckpoint("./keras.model", save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.1, patience=5, min_lr=0.00001, verbose=1)
+	generator_dict = {'horizontal_flip': True,
+	                  'vertical_flip': True}
+  	threshold_max = 0.6122448979591836
+  	mAP_max = 0.68875
+  	Total params: 2,158,417
+	Trainable params: 2,158,417
+	Non-trainable params: 0
+	Highest val_acc: 0.9431
+	Score = 
+3:
+	filter_scaling = 8
+	depth = 5
+	batch_size = 32
+	early_stopping = EarlyStopping(patience=10, verbose=1)
+	model_checkpoint = ModelCheckpoint("./keras.model", save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.1, patience=5, min_lr=0.00001, verbose=1)
+	generator_dict = {'horizontal_flip': True,
+	                  'vertical_flip': True}
+  	threshold_max = 0.7142857142857142
+  	mAP_max = 0.6725
+  	Total params: 540,073
+	Trainable params: 540,073
+	Non-trainable params: 0
+	Highest val_acc: 0.9354
+	Best_val_loss : 0.1543
+	Score = 
+4:
+	filter_scaling = 16
+	depth = 4
+	batch_size = 32
+	early_stopping = EarlyStopping(patience=10, verbose=1)
+	model_checkpoint = ModelCheckpoint("./keras.model", save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.1, patience=5, min_lr=0.00001, verbose=1)
+	generator_dict = {'horizontal_flip': True,
+	                  'vertical_flip': True}
+  	threshold_max = 0.5918367346938775
+  	mAP_max = 0.639
+  	Total params: 535,505
+	Trainable params: 535,505
+	Non-trainable params: 0
+	Highest val_acc: 0.9325
+	Best_val_loss : 0.1710
+	Score = 
+5:
+	filter_scaling = 16
+	depth = 6
+	batch_size = 32
+	early_stopping = EarlyStopping(patience=10, verbose=1)
+	model_checkpoint = ModelCheckpoint("./keras.model", save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.1, patience=5, min_lr=0.00001, verbose=1)
+	generator_dict = {'horizontal_flip': True,
+	                  'vertical_flip': True}
+  	threshold_max = 0.7142857142857142
+  	mAP_max = 0.6672499999999999
+  	Total params: 8,648,273
+	Trainable params: 8,648,273
+	Non-trainable params: 0
+	Highest val_acc: 0.9372
+	Best_val_loss : 0.1551
+	Score = 
+6:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 64
+	early_stopping = EarlyStopping(patience=10, verbose=1)
+	model_checkpoint = ModelCheckpoint("./keras.model", save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.1, patience=5, min_lr=0.00001, verbose=1)
+	generator_dict = {'horizontal_flip': True,
+	                  'vertical_flip': True}
+  	threshold_max = 0.12244897959183673
+  	mAP_max = 0.3434999999999999
+  	Total params: 2,158,417
+	Trainable params: 2,158,417
+	Non-trainable params: 0
+	Highest val_acc: 0.9347
+	Best_val_loss : 0.1541
+	Score = 
+	Note: this is with bad scoring, and this model was accidentally overwritten
+6:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 64
+	early_stopping = EarlyStopping(patience=10, verbose=1)
+	model_checkpoint = ModelCheckpoint("./keras.model", save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.1, patience=5, min_lr=0.00001, verbose=1)
+	generator_dict = {'rotation_range': 0.2,
+                    'width_shift_range': 0.05,
+                    'height_shift_range': 0.05,
+                    'shear_range': 0.05,
+                    'zoom_range': 0.05,
+                    'horizontal_flip': True,
+                    'fill_mode': 'nearest',
+                    'vertical_flip': True}
+  	threshold_max = 0.6530612244897959
+  	mAP_max = 0.6807500000000001
+  	Total params: 2,158,417
+	Trainable params: 2,158,417
+	Non-trainable params: 0
+	Highest val_acc: 
+	Best_val_loss : 
+	Score = 
+	Notes: overwrote unet_6 with this new unet_6
+7:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 64
+	early_stopping = EarlyStopping(patience=10, verbose=1)
+	model_checkpoint = ModelCheckpoint("./keras.model", save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.1, patience=5, min_lr=0.00001, verbose=1)
+	generator_dict = {'rotation_range': 0.4,
+                    'width_shift_range': 0.1,
+                    'height_shift_range': 0.1,
+                    'shear_range': 0.1,
+                    'zoom_range': 0.1,
+                    'horizontal_flip': True,
+                    'fill_mode': 'nearest',
+                    'vertical_flip': True}
+  	threshold_max = 0.5102040816326531
+  	mAP_max = 0.66825
+  	Total params: 2,158,417
+	Trainable params: 2,158,417
+	Non-trainable params: 0
+	Highest val_acc: 0.9348180389404297
+	Best_val_loss : 0.16372817158699035
+	Score = 
+8:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 64
+	early_stopping = EarlyStopping(patience=10, verbose=1)
+	model_checkpoint = ModelCheckpoint("./unet_models/unet_8", save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=0.00001, verbose=1)
+	generator_dict = {'rotation_range': 0.4,
+                    'width_shift_range': 0.1,
+                    'height_shift_range': 0.1,
+                    'shear_range': 0.1,
+                    'zoom_range': 0.1,
+                    'horizontal_flip': True,
+                    'fill_mode': 'nearest',
+                    'vertical_flip': True}
+  	threshold_max = 0.4693877551020408
+  	mAP_max = 0.6977500000000001
+  	Total params: 2,158,417
+	Trainable params: 2,158,417
+	Non-trainable params: 0
+	Highest val_acc: 0.943741455078125
+	Best_val_loss : 0.13886218249797821
+	Score = 
+9:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 64
+	early_stopping = EarlyStopping(patience=10, verbose=1)
+	model_checkpoint = ModelCheckpoint("./unet_models/unet_9", save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+	generator_dict = {'rotation_range': 0.4,
+                    'width_shift_range': 0.1,
+                    'height_shift_range': 0.1,
+                    'shear_range': 0.1,
+                    'zoom_range': 0.1,
+                    'horizontal_flip': True,
+                    'fill_mode': 'nearest',
+                    'vertical_flip': True}
+  	threshold_max = 0.673469387755102
+  	mAP_max = 0.693875
+  	Total params: 2,158,417
+	Trainable params: 2,158,417
+	Non-trainable params: 0
+	Highest val_acc: 0.9445764923095703
+	Best_val_loss: 0.13482240498065948
+	Score = 0.687
+	Notes: This one did really good at the beginning, but never reached the minimum set for it. Going to increase the patience of early stopping just a bit, 12.
+10:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 64
+	early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint("./unet_models/unet_9", save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+	generator_dict = {'rotation_range': 0.4,
+                    'width_shift_range': 0.1,
+                    'height_shift_range': 0.1,
+                    'shear_range': 0.1,
+                    'zoom_range': 0.1,
+                    'horizontal_flip': True,
+                    'fill_mode': 'nearest',
+                    'vertical_flip': True}
+  	threshold_max = 0.6122448979591836
+  	mAP_max = 0.6871250000000001
+  	Total params: 2,158,417
+	Trainable params: 2,158,417
+	Non-trainable params: 0
+	Highest val_acc: 0.9419939422607422
+	Best_val_loss: 0.14008815348148346
+	Score = 
+
+Next steps:
+	X Zero padding instead of expansion
+	X See if that layer I dropped from original UNet helps out
+	X Double check all to make sure you are matching UNet, beginning and end especially
+	Deeper architecture?
+	How to incorporate depth? : Stratify on this? Encode a mask with this and train to an output?
+	X Mean centering images?
+	Initializing weights better/different
+	Change the way zero padding works in the conv net, so that it shrinks a bit
+	~ Adding dropout : in both encoding and decoding phases
+	~ Explore batch normalization
+	Average pooling instead of max, we can deal with extra computation in this network probably.
+	Playing around with the transformations
+	X Remove vertical flip? Remove all transformations that screw up the "time" axis?
+	X Eliminating the few "extreme" examples you saw in the initial data exploration. These could be oddly biasing the models.
+	Other activation functions besides ReLU
+	Change of optimizer? Maybe instead of binary crossentropy we hit MSE?
+	More augmentation: random cropping, blurring, etc. Should we run the test images through augmentation too?
+	Perform different image operations on the images, have different neural networks learn them, ensemble the masks somehow. This could belike one looks at inversions, one looks at things that have been sharpened, etc.
+		Add multiple channels, doing something different to each channel.
+	Try three different scalings: 0 to 1, -1 to 1, standardized
+	Isotonic regression to correct probabilities: is this pixelwise? Need to think about isotonic regression.
+		I should look at a histogram of the output predictions. Are they pushed or spread evenly? Which do I want...?
+	Try ZP_1 params again with different train - test split, at current augmentation.
+	Reduce all the fooling around with the gradient, use straight with long early stopping.
+
+Started zero padding here. Loss and accuracy can't be exactly compared, as the zero padding sections give a boost to each score.
+
+zp_1:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 64
+	early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint("./unet_models/unet_9", save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+	generator_dict = {'rotation_range': 0.4,
+                    'width_shift_range': 0.1,
+                    'height_shift_range': 0.1,
+                    'shear_range': 0.1,
+                    'zoom_range': 0.1,
+                    'horizontal_flip': True,
+                    'fill_mode': 'nearest',
+                    'vertical_flip': True}
+  	threshold_max = 0.5918367346938775
+  	mAP_max = 0.745
+  	Total params: 2,158,417
+	Trainable params: 2,158,417
+	Non-trainable params: 0
+	Highest val_acc: 0.9695538330078125
+	Best_val_loss: 0.08249220818281174
+	Score = 0.728
+	Notes : Accidentally overwrote this saved model
+zp_2:
+	filter_scaling = 16
+	depth = 6
+	batch_size = 64
+	early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint("./unet_models/unet_9", save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+	generator_dict = {'rotation_range': 0.4,
+                    'width_shift_range': 0.1,
+                    'height_shift_range': 0.1,
+                    'shear_range': 0.1,
+                    'zoom_range': 0.1,
+                    'horizontal_flip': True,
+                    'fill_mode': 'nearest',
+                    'vertical_flip': True}
+  	threshold_max = 0.4897959183673469
+  	mAP_max = 0.7198750000000002
+  	Total params: 8,648,273
+	Trainable params: 8,648,273
+	Non-trainable params: 0
+	Highest val_acc: 0.9647830963134766
+	Best_val_loss: 0.09091612577438354
+	Score = 
+zp_3:
+	filter_scaling = 32
+	depth = 6
+	batch_size = 64
+	early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint("./unet_models/unet_9", save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+	generator_dict = {'rotation_range': 0.4,
+                    'width_shift_range': 0.1,
+                    'height_shift_range': 0.1,
+                    'shear_range': 0.1,
+                    'zoom_range': 0.1,
+                    'horizontal_flip': True,
+                    'fill_mode': 'nearest',
+                    'vertical_flip': True}
+  	threshold_max = 0.7142857142857142
+  	mAP_max = 0.6866249999999999
+  	Total params: 34,585,761
+	Trainable params: 34,585,761
+	Non-trainable params: 0
+	Highest val_acc: 0.9628440093994141
+	Best_val_loss: 0.1023246082663536
+	Score = 
+zp_4:
+	filter_scaling = 32
+	depth = 5
+	batch_size = 64
+	early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint("./unet_models/unet_9", save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+	generator_dict = {'rotation_range': 0.4,
+                    'width_shift_range': 0.1,
+                    'height_shift_range': 0.1,
+                    'shear_range': 0.1,
+                    'zoom_range': 0.1,
+                    'horizontal_flip': True,
+                    'fill_mode': 'nearest',
+                    'vertical_flip': True}
+  	threshold_max = 0.7755102040816326
+  	mAP_max = 0.526875
+  	Total params: 2,158,417
+	Trainable params: 2,158,417
+	Non-trainable params: 0
+	Highest val_acc: 0.9386772155761719
+	Best_val_loss: 0.15741369962692262
+	Score = 
+	Notes : 
+zp_5:
+	filter_scaling = 8
+	depth = 5
+	batch_size = 64
+	early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint("./unet_models/unet_9", save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+	generator_dict = {'rotation_range': 0.4,
+                    'width_shift_range': 0.1,
+                    'height_shift_range': 0.1,
+                    'shear_range': 0.1,
+                    'zoom_range': 0.1,
+                    'horizontal_flip': True,
+                    'fill_mode': 'nearest',
+                    'vertical_flip': True}
+  	threshold_max = 0.5714285714285714
+  	mAP_max = 0.7140000000000001
+  	Total params: 2,158,417
+	Trainable params: 2,158,417
+	Non-trainable params: 0
+	Highest val_acc: 0.9647264862060547
+	Best_val_loss: 0.09738373279571533
+	Score = 
+	Notes : 
+zp_6:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 64
+	early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint("./unet_models/unet_9", save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+	generator_dict = {'rotation_range': 0.4,
+                    'width_shift_range': 0.1,
+                    'height_shift_range': 0.1,
+                    'shear_range': 0.1,
+                    'zoom_range': 0.1,
+                    'horizontal_flip': True,
+                    'fill_mode': 'nearest',
+                    'vertical_flip': True}
+  	threshold_max = 0.7346938775510203
+  	mAP_max = 0.6709999999999999
+  	Total params: 2,158,417
+	Trainable params: 2,158,417
+	Non-trainable params: 0
+	Highest val_acc: 0.9496488189697265
+	Best_val_loss: 0.12801006942987442
+	Score = 
+	Notes : Added Droput(0.25) after all max pooling layers on the descending ladder.
+
+Notes: Have I been just overfitting anyway by not having dropout? It could be that the deeper models ARE better, but by not using dropout properly I have been letting them overfit to the training data set.
+
+zp_7:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 256
+	early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint("./unet_models/unet_9", save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+	generator_dict = {'rotation_range': 0.4,
+                    'width_shift_range': 0.1,
+                    'height_shift_range': 0.1,
+                    'shear_range': 0.1,
+                    'zoom_range': 0.1,
+                    'horizontal_flip': True,
+                    'fill_mode': 'nearest',
+                    'vertical_flip': True}
+  	threshold_max = 0.5102040816326531
+  	mAP_max = 0.7030000000000001
+  	Total params: 2,158,417
+	Trainable params: 2,158,417
+	Non-trainable params: 0
+	Highest val_acc: 0.9619043731689453
+	Best_val_loss: 0.10103662848472596
+	Score = 
+	Notes : Added Droput(0.25) after all max pooling layers on the descending ladder.
+zp_8:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 256
+	early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint("./unet_models/unet_9", save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+	generator_dict = {'rotation_range': 0.4,
+                    'width_shift_range': 0.1,
+                    'height_shift_range': 0.1,
+                    'shear_range': 0.1,
+                    'zoom_range': 0.1,
+                    'horizontal_flip': True,
+                    'fill_mode': 'nearest',
+                    'vertical_flip': True}
+  	threshold_max = 0.5918367346938775
+  	mAP_max = 0.680125
+  	Total params: 2,158,417
+	Trainable params: 2,158,417
+	Non-trainable params: 0
+	Highest val_acc: 
+	Best_val_loss: 
+	Score = 
+	Notes : Removed dropout. Back to the highest scoring zp_1 model, but with higher batch_size.
+
+Going to try mean centering the images.
+
+mc_1:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 256
+	early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint("./unet_models/unet_9", save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+	generator_dict = {'rotation_range': 0.4,
+                    'width_shift_range': 0.1,
+                    'height_shift_range': 0.1,
+                    'shear_range': 0.1,
+                    'zoom_range': 0.1,
+                    'horizontal_flip': True,
+                    'fill_mode': 'nearest',
+                    'vertical_flip': True}
+  	threshold_max = 0.5102040816326531
+  	mAP_max = 0.7030000000000001
+  	Total params: 2,158,417
+	Trainable params: 2,158,417
+	Non-trainable params: 0
+	Highest val_acc: 0.9619043731689453
+	Best_val_loss: 0.10103662848472596
+	Score = 
+	Notes : No dropout. Same as zp_1 w/ batch size = 256 and mean centering of images.
+
+OK, so I just realized I had been training the Conv2DTranspose with default linear instead of ReLU. Changing this now. After that, will change the initialization of weights.
+
+zp_9:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 256
+	early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint("./unet_models/unet_9", save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+	generator_dict = {'rotation_range': 0.4,
+                    'width_shift_range': 0.1,
+                    'height_shift_range': 0.1,
+                    'shear_range': 0.1,
+                    'zoom_range': 0.1,
+                    'horizontal_flip': True,
+                    'fill_mode': 'nearest',
+                    'vertical_flip': True}
+  	threshold_max = 0.5918367346938775
+  	mAP_max = 0.680125
+  	Total params: 2,158,417
+	Trainable params: 2,158,417
+	Non-trainable params: 0
+	Highest val_acc: 
+	Best_val_loss: 
+	Score = 
+	Notes : Removed dropout. Back to the highest scoring zp_1 model, but with higher batch_size. Changed the Conv2DTranspose activation from the default linear to ReLU.
+
+zp_10:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 256
+	early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint("./unet_models/unet_9", save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+	generator_dict = {'rotation_range': 0.4,
+                    'width_shift_range': 0.1,
+                    'height_shift_range': 0.1,
+                    'shear_range': 0.1,
+                    'zoom_range': 0.1,
+                    'horizontal_flip': True,
+                    'fill_mode': 'nearest',
+                    'vertical_flip': True}
+  	threshold_max = 0.6326530612244897
+  	mAP_max = 0.6863750000000001
+  	Total params: 2,158,417
+	Trainable params: 2,158,417
+	Non-trainable params: 0
+	Highest val_acc: 0.9622309875488281
+	Best_val_loss: 0.09976757407188415
+	Score = 
+	Notes : Same as zp_9, but I am recording the learning rate as well, I want to see when the steps occur. I believe I may be able to get better performing models by letting the patiences increase. Also possibly by adjusting the learning rate step down to be slightly slower, maybe with same patience.
+zp_11:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 256
+	early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint("./unet_models/unet_9", save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+	generator_dict = {'rotation_range': 0.4,
+                    'width_shift_range': 0.1,
+                    'height_shift_range': 0.1,
+                    'shear_range': 0.1,
+                    'zoom_range': 0.1,
+                    'horizontal_flip': True,
+                    'fill_mode': 'nearest',
+                    'vertical_flip': True}
+  	threshold_max = 0.7142857142857142
+  	mAP_max = 0.699125
+  	Total params: 2,158,417
+	Trainable params: 2,158,417
+	Non-trainable params: 0
+	Highest val_acc: 0.9645092010498046
+	Best_val_loss: 0.09371266812086106
+	Score = 
+	Notes : Same as zp_10, but changed intialization to he_normal, a la u-net paper.
+
+zp_12:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 256
+	early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint("./unet_models/unet_9", save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+	generator_dict = {'rotation_range': 0.4,
+                    'width_shift_range': 0.1,
+                    'height_shift_range': 0.1,
+                    'shear_range': 0.1,
+                    'zoom_range': 0.1,
+                    'horizontal_flip': True,
+                    'fill_mode': 'nearest',
+                    'vertical_flip': True}
+  	threshold_max = 0.6122448979591836
+  	mAP_max = 0.6993606138107418
+  	Total params: 2,158,417
+	Trainable params: 2,158,417
+	Non-trainable params: 0
+	Highest val_acc: 0.9650722807630554
+	Best_val_loss: 0.09341111148486052
+	Score = 0.679
+	Notes : Same as zp_11, but I reduced the samples it is training on to only non-outliers. And I excluded all zero valued. The report mAP shouldn't necessarily match all previous, because we have eliminated the samples with sum 0.
+zp_13:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 256
+	early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint("./unet_models/unet_9", save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+	generator_dict = {'rotation_range': 0.4,
+                    'width_shift_range': 0.1,
+                    'height_shift_range': 0.1,
+                    'shear_range': 0.1,
+                    'zoom_range': 0.1,
+                    'horizontal_flip': True,
+                    'fill_mode': 'nearest',
+                    'vertical_flip': True}
+  	threshold_max = 0.5510204081632653
+  	mAP_max = 0.7190537084398977
+  	Total params: 2,158,417
+	Trainable params: 2,158,417
+	Non-trainable params: 0
+	Highest val_acc: 0.965701051837648
+	Best_val_loss: 0.08749588130189635
+	Score = 
+	Notes : Same as zp_12, but added batch normalization after the second conv layer in each step on the ladder down.
+
+Tried adding batch normalization after the second convolution on they way up ladder. This was very unstable. If I try again, will need to implement significant dropout I believe.
+
+zp_14:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 256
+	early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint("./unet_models/unet_9", save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+	generator_dict = {'rotation_range': 0.4,
+                    'width_shift_range': 0.1,
+                    'height_shift_range': 0.1,
+                    'shear_range': 0.1,
+                    'zoom_range': 0.1,
+                    'horizontal_flip': True,
+                    'fill_mode': 'nearest',
+                    'vertical_flip': True}
+  	threshold_max = 0.5102040816326531
+  	mAP_max = 0.7025575447570332
+  	Total params: 2,158,417
+	Trainable params: 2,158,417
+	Non-trainable params: 0
+	Highest val_acc: 0.9661442201460719
+	Best_val_loss: 0.09110336257216266
+	Score = 
+	Notes : With both down ladder conv layers having batch normalization, things got unstable.
+
+Due to the instability, I'm adding in Droput(0.25) after the batch normalization layers.
+This does not seem to be helping.
+
+OK, I think a next thing will be to remove some of the augmentation. Reading more, it seems like doing the vertical flip is bad, because this axis really indicates a time/wave distance traveled, and flipping it might mess things up.
+
+zp_15:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 256
+	early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint("./unet_models/unet_9", save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+	generator_dict = {'rotation_range': 0.4,
+                    'width_shift_range': 0.1,
+                    'height_shift_range': 0.1,
+                    'shear_range': 0.1,
+                    'zoom_range': 0.1,
+                    'horizontal_flip': True,
+                    'fill_mode': 'nearest',
+                    'vertical_flip': True}
+  	threshold_max = 0.5102040816326531
+  	mAP_max = 0.7025575447570332
+  	Total params: 2,158,417
+	Trainable params: 2,158,417
+	Non-trainable params: 0
+	Highest val_acc: 0.9661442201460719
+	Best_val_loss: 0.09110336257216266
+	Score = 
+	Notes : With both down ladder conv layers having batch normalization, things got unstable, so this added Dropout(0.25) before each max pooling layer.
+
+zp_16:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 256
+	early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint("./unet_models/unet_9", save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+	generator_dict = {'width_shift_range': 0.1,
+                    'height_shift_range': 0.1,
+                    'shear_range': 0.1,
+                    'zoom_range': 0.1,
+                    'horizontal_flip': True,
+                    'fill_mode': 'nearest'}
+  	threshold_max = 0.5918367346938775
+  	mAP_max = 0.722762148337596
+  	Total params: 2,158,417
+	Trainable params: 2,158,417
+	Non-trainable params: 0
+	Highest val_acc: 0.9665743540924834
+	Best_val_loss: 0.08594779153842755
+	Score = 
+	Notes : Seems like this isn't really the right avenue. Going to try with the image augmentation steps, have had good luck this this in the past.
+
+zp_17:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 256
+	early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint("./unet_models/unet_9", save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+	generator_dict = {'width_shift_range': 0.1,
+                    'height_shift_range': 0.1,
+                    'shear_range': 0.1,
+                    'zoom_range': 0.1,
+                    'horizontal_flip': True,
+                    'fill_mode': 'nearest'}
+  	threshold_max = 0.6530612244897959
+  	mAP_max = 0.7181585677749361
+  	Total params: 2,158,417
+	Trainable params: 2,158,417
+	Non-trainable params: 0
+	Highest val_acc: 0.9667646403202925
+	Best_val_loss: 0.086864448778922
+	Score = 
+	Notes : Reduced all augmentations by 1/2.
+
+zp_18:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 256
+	early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint("./unet_models/unet_9", save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+	generator_dict = {'width_shift_range': 0.05,
+                    'height_shift_range': 0.05,
+                    'shear_range': 0.05,
+                    'zoom_range': 0.05,
+                    'horizontal_flip': True,
+                    'fill_mode': 'constant',
+                    'cval': 0.0}
+  	threshold_max = 0.5714285714285714
+  	mAP_max = 0.7240409207161126
+  	Total params: 2,158,417
+	Trainable params: 2,158,417
+	Non-trainable params: 0
+	Highest val_acc: 0.9698939020066615
+	Best_val_loss: 0.07924509065611587
+	Score = 0.695
+	Notes : Reduced all augmentations by 1/2.
+
+zp_19:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 256
+	early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint("./unet_models/unet_9", save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+	generator_dict = {'rotation_range': 0.4,
+					'width_shift_range': 0.05,
+                    'height_shift_range': 0.05,
+                    'shear_range': 0.05,
+                    'zoom_range': 0.05,
+                    'horizontal_flip': True,
+                    'fill_mode': 'constant',
+                    'cval': 0.0}
+  	threshold_max = 0.6530612244897959
+  	mAP_max = 0.717391304347826
+  	Total params: 2,158,417
+	Trainable params: 2,158,417
+	Non-trainable params: 0
+	Highest val_acc: 0.9670072196389708
+	Best_val_loss: 0.08341677457360966
+	Score = 0.702
+	Notes : Reduced all augmentations by 1/2.
+zp_20:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 256
+	early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint("./unet_models/unet_9", save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+	generator_dict = {'rotation_range': 0.4,
+					'width_shift_range': 0.05,
+                    'height_shift_range': 0.05,
+                    'shear_range': 0.05,
+                    'zoom_range': 0.05,
+                    'horizontal_flip': True,
+                    'fill_mode': 'constant',
+                    'cval': 0.0,
+                    'zca_whitening': True}
+  	threshold_max = 0.6530612244897959
+  	mAP_max = 0.7098465473145781
+  	Total params: 2,158,417
+	Trainable params: 2,158,417
+	Non-trainable params: 0
+	Highest val_acc: 0.9670967436812418
+	Best_val_loss: 0.08586399211450611
+	Score = 
+	Notes : ZCA whitening. Not sure if this actually helped, or even if it did anything. Got warning errors that indicated it may not have done anything.
+
+unet_pretrain_2:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 256
+	early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint("./unet_models/unet_9", save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+	Notes: training to try to get weights in a sensible starting point. had to add droput after the max pooling, pretrain_1 didn't converge very well. Not sure if this just actually hurt it all. Used this as a starting point.
+
+unet_pretrain_zp_1:
+	Using unet_pretrain_2 as starting weight. Left in the droput, but not sure this was a good idea.
+  	threshold_max = 0.6122448979591836
+  	mAP_max = 0.7065
+  	Total params: 2,158,417
+	Trainable params: 2,158,417
+	Non-trainable params: 0
+	Highest val_acc: 0.9658604431152343
+	Best_val_loss: 0.09226396143436431
+	Score = 
+
+unet_pretrain_zp_2:
+	Same but got rid of the dropout to see if it would help.
+  	threshold_max = 0.7551020408163265
+  	mAP_max = 0.71625
+  	Total params: 2,158,417
+	Trainable params: 2,158,417
+	Non-trainable params: 0
+	Highest val_acc: 0.9669437408447266
+	Best_val_loss: 0.08966537833213806
+	Score = 
+
+unet_pretrain_zp_3:
+	Same, starting at the unet_pretrain_zp_2 checkpoint. So basically reupping the learning rate, seeing what happens...
+
+unet_train_test_split_1:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 256
+	early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint(model_file, save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+	learning_rec= LearningRateHistory()
+	generator_dict = {'width_shift_range': 0.05,
+                    'height_shift_range': 0.05,
+                    'shear_range': 0.05,
+                    'zoom_range': 0.05,
+                    'horizontal_flip': True,
+                    'fill_mode': 'constant',
+                    'cval': 0.0}
+    conv_initialization_dict = {"activation":'relu', 
+                            "padding":'same',
+                            "kernel_initializer" : 'he_normal'}
+    threshold_max = 0.5918367346938775
+  	mAP_max = 0.6772499999999999
+	Highest val_acc: 0.9610749816894532
+	Best_val_loss: 0.10377983629703522
+	Notes: Train test split = 0.4, random seed = 42.
+
+unet_train_test_split_1_pure_adam:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 256
+	early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint(model_file, save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+	learning_rec= LearningRateHistory()
+	generator_dict = {'width_shift_range': 0.05,
+                    'height_shift_range': 0.05,
+                    'shear_range': 0.05,
+                    'zoom_range': 0.05,
+                    'horizontal_flip': True,
+                    'fill_mode': 'constant',
+                    'cval': 0.0}
+    conv_initialization_dict = {"activation":'relu', 
+                            "padding":'same',
+                            "kernel_initializer" : 'he_normal'}
+    threshold_max = 0.5714285714285714
+  	mAP_max = 0.6941250000000001
+	Highest val_acc: 0.9612877655029297
+	Best_val_loss: 0.10705286622047425
+	Notes: Train test split = 0.4, random seed = 42. Got rid of any control over the learning rate and just used pure adam. We got higher mAP than for the previous, even though the validation loss was bigger. The validation accuracy was a bit better though. Very weird.
+
+unet_train_test_split_2_pure_adam:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 256
+	early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint(model_file, save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+	learning_rec= LearningRateHistory()
+	generator_dict = {'width_shift_range': 0.05,
+                    'height_shift_range': 0.05,
+                    'shear_range': 0.05,
+                    'zoom_range': 0.05,
+                    'horizontal_flip': True,
+                    'fill_mode': 'constant',
+                    'cval': 0.0}
+    conv_initialization_dict = {"activation":'relu', 
+                            "padding":'same',
+                            "kernel_initializer" : 'he_normal'}
+    threshold_max = 0.4693877551020408
+  	mAP_max = 0.7119166666666668
+	Highest val_acc: 0.9658166535695394
+	Best_val_loss: 0.09324619094530741
+	Notes: Train test split = 0.3, random seed = 42. Got rid of any control over the learning rate and just used pure adam. We got higher mAP than for the previous, even though the validation loss was bigger. The validation accuracy was a bit better though. Very weird.
+
+unet_train_test_split_3_pure_adam:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 256
+	early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint(model_file, save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+	learning_rec= LearningRateHistory()
+	generator_dict = {'width_shift_range': 0.05,
+                    'height_shift_range': 0.05,
+                    'shear_range': 0.05,
+                    'zoom_range': 0.05,
+                    'horizontal_flip': True,
+                    'fill_mode': 'constant',
+                    'cval': 0.0}
+    conv_initialization_dict = {"activation":'relu', 
+                            "padding":'same',
+                            "kernel_initializer" : 'he_normal'}
+    threshold_max = 0.5714285714285714
+  	mAP_max = 0.7105
+	Highest val_acc: 0.9657856750488282
+	Best_val_loss: 0.09765083700418473
+	Notes: Train test split = 0.2, random seed = 42. Got rid of any control over the learning rate and just used pure adam. We got higher mAP than for the previous, even though the validation loss was bigger. The validation accuracy was a bit better though. Very weird.
+
+unet_train_test_split_4_pure_adam:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 256
+	early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint(model_file, save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+	learning_rec= LearningRateHistory()
+	generator_dict = {'width_shift_range': 0.05,
+                    'height_shift_range': 0.05,
+                    'shear_range': 0.05,
+                    'zoom_range': 0.05,
+                    'horizontal_flip': True,
+                    'fill_mode': 'constant',
+                    'cval': 0.0}
+    conv_initialization_dict = {"activation":'relu', 
+                            "padding":'same',
+                            "kernel_initializer" : 'he_normal'}
+    threshold_max = 0.7346938775510203
+  	mAP_max = 0.735
+	Highest val_acc: 0.9715742564201355
+	Best_val_loss: 0.07754680067300797
+	Notes: Train test split = 0.1, random seed = 42. Got rid of any control over the learning rate and just used pure adam. We got higher mAP than for the previous, even though the validation loss was bigger. The validation accuracy was a bit better though. Very weird.
+
+Now trying to experiment with batch size. Smaller batches tend to give lower loss apparently. 
+
+unet_batch_size_8:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 8
+	generator_dict = {'width_shift_range': 0.05,
+                    'height_shift_range': 0.05,
+                    'shear_range': 0.05,
+                    'zoom_range': 0.05,
+                    'horizontal_flip': True,
+                    'fill_mode': 'constant',
+                    'cval': 0.0}
+    early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint(model_file, save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+    threshold_max = 0.6938775510204082
+  	mAP_max = 0.724375
+	Highest val_acc: 0.9689583587646484
+	Best_val_loss: 0.08747264418751001
+
+unet_batch_size_16:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 16
+	generator_dict = {'width_shift_range': 0.05,
+                    'height_shift_range': 0.05,
+                    'shear_range': 0.05,
+                    'zoom_range': 0.05,
+                    'horizontal_flip': True,
+                    'fill_mode': 'constant',
+                    'cval': 0.0}
+    early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint(model_file, save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+    threshold_max = 0.7142857142857142
+  	mAP_max = 0.729375
+	Highest val_acc: 0.9677546691894531
+	Best_val_loss: 0.08808900758624078
+
+unet_batch_size_32:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 32
+	generator_dict = {'width_shift_range': 0.05,
+                    'height_shift_range': 0.05,
+                    'shear_range': 0.05,
+                    'zoom_range': 0.05,
+                    'horizontal_flip': True,
+                    'fill_mode': 'constant',
+                    'cval': 0.0}
+    early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint(model_file, save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+    threshold_max = 0.6122448979591836
+  	mAP_max = 0.727375
+	Highest val_acc: 0.9686669921875
+	Best_val_loss: 0.08760573104023933
+
+unet_batch_size_64:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 64
+	generator_dict = {'width_shift_range': 0.05,
+                    'height_shift_range': 0.05,
+                    'shear_range': 0.05,
+                    'zoom_range': 0.05,
+                    'horizontal_flip': True,
+                    'fill_mode': 'constant',
+                    'cval': 0.0}
+    early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint(model_file, save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+    threshold_max = 0.6530612244897959
+  	mAP_max = 0.7354999999999999
+	Highest val_acc: 0.9691000366210938
+	Best_val_loss: 0.08426429241895676
+
+unet_batch_size_128:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 128
+	generator_dict = {'width_shift_range': 0.05,
+                    'height_shift_range': 0.05,
+                    'shear_range': 0.05,
+                    'zoom_range': 0.05,
+                    'horizontal_flip': True,
+                    'fill_mode': 'constant',
+                    'cval': 0.0}
+    early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint(model_file, save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+    threshold_max = 0.673469387755102
+  	mAP_max = 0.7215
+	Highest val_acc: 0.967317123413086
+	Best_val_loss: 0.08600513339042663
+
+unet_batch_size_64_horizontal_flip_only:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 64
+	generator_dict = {'horizontal_flip': True}
+    early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint(model_file, save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+    threshold_max = 0.5102040816326531
+  	mAP_max = 0.72775
+	Highest val_acc: 0.9687892913818359
+	Best_val_loss: 0.0860838022828102
+	Notes: Around epoch 25 - 30 the training accuracy/loss diverged heavily from the validation. Adding dropout to try to control this. After each max pooling layer on the way down.
+
+unet_batch_size_64_horizontal_flip_only_dropout_1:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 64
+	generator_dict = {'horizontal_flip': True}
+    early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint(model_file, save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+    threshold_max = 0.5102040816326531
+  	mAP_max = 0.7075
+	Highest val_acc: 0.9591422271728516
+	Best_val_loss: 0.11319052904844285
+	Notes: This adds droput after each max pooling layer on the way down. Performance sucked.
+
+unet_batch_size_64_horizontal_flip_only_batch_normalization_1
+	filter_scaling = 16
+	depth = 5
+	batch_size = 64
+	generator_dict = {'horizontal_flip': True}
+    early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint(model_file, save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+    threshold_max = 0.673469387755102
+  	mAP_max = 0.7113749999999999
+	Highest val_acc: 0.968524169921875
+	Best_val_loss: 0.08625775009393692
+	Notes: Batch normalization after the convolutional layers on the way down. Batch normalization comes before relu for those layers. Had to add a second convolutional dictionary of kwargs to deal with this. Validatoin is fluctuating wildly. Found that the momentum is set super high by default in Keras, will trying turning it down for the next iteration: https://github.com/keras-team/keras/issues/10666
+
+unet_batch_size_64_horizontal_flip_only_batch_normalization_2
+	filter_scaling = 16
+	depth = 5
+	batch_size = 64
+	generator_dict = {'horizontal_flip': True}
+    early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint(model_file, save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+    threshold_max = 0.5102040816326531
+  	mAP_max = 0.7075
+	Highest val_acc: 0.9591422271728516
+	Best_val_loss: 0.11319052904844285
+	Notes: Same with batch normalization layer momentum set to 0.9. Batch normalization is still before the non-linear activation function.
+
+unet_batch_size_64_horizontal_flip_only_batch_normalization_3
+	filter_scaling = 16
+	depth = 5
+	batch_size = 64
+	generator_dict = {'horizontal_flip': True}
+    early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint(model_file, save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+    threshold_max = 0.673469387755102
+  	mAP_max = 0.7282500000000001
+	Highest val_acc: 0.9719582366943359
+	Best_val_loss: 0.07750378251075744
+	Notes: I screwed up the second convolution in each ladder, and had the activation occur AFTER the non-linearity. Correcting here so that both occur before the non-linear activation function.
+
+unet_batch_size_64_horizontal_flip_only_batch_normalization_4
+	filter_scaling = 16
+	depth = 5
+	batch_size = 64
+	generator_dict = {'horizontal_flip': True}
+    early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint(model_file, save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+    threshold_max = 0.673469387755102
+  	mAP_max = 0.7282500000000001
+	Highest val_acc: 0.9719582366943359
+	Best_val_loss: 0.07750378251075744
+	Notes: Now trying where batch normalization occurs AFTER the non-linear function. This seems to have performed better when I screwed it up for that one layer.
+
+unet_batch_size_64_horizontal_flip_only_batch_normalization_5
+	filter_scaling = 16
+	depth = 5
+	batch_size = 64
+	generator_dict = {'horizontal_flip': True}
+    early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint(model_file, save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+    threshold_max = 0.4897959183673469
+  	mAP_max = 0.7177499999999999
+	Highest val_acc: 0.9677017211914063
+	Best_val_loss: 0.0872700732946396
+	Horizontal flip threshold: 0.44897959183673464
+	Horizontal_flip_mAP: 0.7346250000000001
+	Notes: Now trying where batch normalization occurs AFTER the non-linear function. And also adding batch normalization after all the first layers of convolution in the up ladder. If it helps, will add them for all except the last layer. Read that it wouldn't be good to have this feeding into the output mask layer. Need to understand batch normalization better to udnerstand why.
+
+unet_batch_size_64_horizontal_flip_only_batch_normalization_6
+	filter_scaling = 16
+	depth = 5
+	batch_size = 64
+	generator_dict = {'horizontal_flip': True}
+    early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint(model_file, save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+  	mAP_max = 0.7275
+	Horizontal_flip_mAP: 0.750125
+	Notes: Same, but with momentum = 0.8 in all Batch Normalization layers.
+
+unet_batch_size_64_horizontal_flip_only_batch_normalization_7
+	filter_scaling = 16
+	depth = 5
+	batch_size = 64
+	generator_dict = {'horizontal_flip': True}
+    early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint(model_file, save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+  	mAP_max = 0.744375
+	Horizontal_flip_mAP: 0.7566250000000001
+	Notes: Same, but went back to the old schedule of stochastic gradient descent learning rate reductions.
+
+unet_batch_size_64_horizontal_flip_only_batch_normalization_8
+	filter_scaling = 16
+	depth = 5
+	batch_size = 64
+	generator_dict = {'horizontal_flip': True}
+    early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint(model_file, save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.8, patience=3, min_lr=1e-6, verbose=1)
+  	mAP_max = 0.725
+	Highest val_acc: 0.9700521850585937
+	Best_val_loss: 0.08654721051454545
+	Horizontal_flip_mAP: 0.745
+	Notes: Same, but trying new schedule of learning rate reductions.
+
+unet_batch_size_64_horizontal_flip_only_batch_normalization_9
+	filter_scaling = 16
+	depth = 5
+	batch_size = 64
+	generator_dict = {'horizontal_flip': True}
+    early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint(model_file, save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+	Highest val_acc: 0.9716920471191406
+	Best_val_loss: 0.0801149295270443
+	mAP_max = 0.7354999999999999
+	Horizontal_flip_mAP: 0.7496250000000001
+	Notes: That learning schedule sucked. Adding the last batch normalization on the up ladder, except before the final output Conv2D(1, (1,1)) layer.
+
+unet_batch_size_64_horizontal_flip_only_batch_normalization_10
+	filter_scaling = 16
+	depth = 5
+	batch_size = 64
+	generator_dict = {'horizontal_flip': True}
+    early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint(model_file, save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+	Highest val_acc: 
+	Best_val_loss: 
+	mAP_max = 
+	Horizontal_flip_mAP: 
+	Notes: Now added dropout after all the batch normalizations. It seems like the loss is decreasing until the training starts to overfit. Can we prevnt that and keep the val loss coming down with the training loss, even if it is slower? This is fluctuating A LOT.
+
+Now doing trials over the different preprocessing. Using 
+
+unet_preprocessing_1:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 64
+	generator_dict = {'horizontal_flip': True}
+    early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint(model_file, save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+	Highest val_acc: 0.9676969909667968
+	Best_val_loss: 0.08695670381188393
+	mAP_max = 0.72075
+	Horizontal_flip_mAP: 0.7408750000000001
+	Notes: Following the top score model so far, unet_batch_size_64_horizontal_flip_only_batch_normalization_7. So there is batch normalization with momentum of 0.8 after each batch norm layer. Batch norm occurs after every convolutional layer except the bottom embedding layer, and the layer directly before the mask output. Pre-processing here was subtracting the mean of each image from itself, after already scaling it from 0 to 1. So scale should be about -0.5 to 0.5.
+
+unet_preprocessing_2:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 64
+	generator_dict = {'horizontal_flip': True}
+    early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint(model_file, save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+	Highest val_acc: 0.969407958984375
+	Best_val_loss: 0.0926642893254757
+	mAP_max = 0.7492500000000001
+	Horizontal_flip_mAP: 0.759375
+	Notes: Same but added batch normalization in the bottom convolutional layers as well.
+
+unet_preprocessing_2:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 64
+	generator_dict = {'horizontal_flip': True}
+    early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint(model_file, save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+	Highest val_acc: 0.969407958984375
+	Best_val_loss: 0.0926642893254757
+	mAP_max = 0.7492500000000001
+	Horizontal_flip_mAP: 0.759375
+	Notes: Added batch normalization momentum 0.8 after the concatenation layer on the up ladder.

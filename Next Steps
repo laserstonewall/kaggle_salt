@@ -1,0 +1,39 @@
+NEXT FIRST STEP: Look at the depth of the bad examples that I am getting wrong, see if that is a strongly explanatory variable.
+
+X Individual image mean centering
+X Preprocess -1 to 1
+X Preprocess standard scaling
+X Combine all three into channels.
+Parameter search
+	Next : hit 48 on 5 depth.
+Principled image augmentation trials.
+Upsample the classes that it is having trouble with.
+Do careful cross validation of the depth/filter_scaling and grid search.
+
+Older next steps, draw from here:
+	X Zero padding instead of expansion
+	X See if that layer I dropped from original UNet helps out
+	X Double check all to make sure you are matching UNet, beginning and end especially
+	Deeper architecture?
+	How to incorporate depth? : Stratify on this? Encode a mask with this and train to an output?
+	X Mean centering images?
+	Initializing weights better/different
+	Change the way zero padding works in the conv net, so that it shrinks a bit
+	~ Adding dropout : in both encoding and decoding phases
+	~ Explore batch normalization
+	Average pooling instead of max, we can deal with extra computation in this network probably.
+	Playing around with the transformations
+	X Remove vertical flip? Remove all transformations that screw up the "time" axis?
+	X Eliminating the few "extreme" examples you saw in the initial data exploration. These could be oddly biasing the models.
+	Other activation functions besides ReLU
+	Change of optimizer? Maybe instead of binary crossentropy we hit MSE?
+	More augmentation: random cropping, blurring, etc. Should we run the test images through augmentation too?
+	Perform different image operations on the images, have different neural networks learn them, ensemble the masks somehow. This could belike one looks at inversions, one looks at things that have been sharpened, etc.
+		Add multiple channels, doing something different to each channel.
+	Try three different scalings: 0 to 1, -1 to 1, standardized
+	Isotonic regression to correct probabilities: is this pixelwise? Need to think about isotonic regression.
+		I should look at a histogram of the output predictions. Are they pushed or spread evenly? Which do I want...?
+	Try ZP_1 params again with different train - test split, at current augmentation.
+	Reduce all the fooling around with the gradient, use straight with long early stopping.
+	Need to take a look at the type of examples that I am getting wrong, is there a certain group?
+	Reapply batch normalization, but BEFORE the ReLU, since the 0's of ReLU might make more sense.
