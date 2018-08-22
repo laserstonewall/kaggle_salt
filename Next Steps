@@ -5,7 +5,13 @@ X Preprocess -1 to 1
 X Preprocess standard scaling
 X Combine all three into channels.
 Parameter search
-	Next : hit 48 on 5 depth.
+	X Next : hit 48 on 5 depth.
+	X Next: batch siz dependence at the discovered maximum: 32, 128, 256
+X AdamW
+Transfer learning
+Conditional random fields
+Dice loss
+
 Principled image augmentation trials.
 Upsample the classes that it is having trouble with.
 Do careful cross validation of the depth/filter_scaling and grid search.
@@ -14,7 +20,7 @@ Older next steps, draw from here:
 	X Zero padding instead of expansion
 	X See if that layer I dropped from original UNet helps out
 	X Double check all to make sure you are matching UNet, beginning and end especially
-	Deeper architecture?
+	X Deeper architecture?
 	How to incorporate depth? : Stratify on this? Encode a mask with this and train to an output?
 	X Mean centering images?
 	Initializing weights better/different

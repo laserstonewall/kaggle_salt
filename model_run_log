@@ -1288,7 +1288,7 @@ unet_preprocessing_2:
 	Horizontal_flip_mAP: 0.759375
 	Notes: Same but added batch normalization in the bottom convolutional layers as well.
 
-unet_preprocessing_2:
+unet_preprocessing_3:
 	filter_scaling = 16
 	depth = 5
 	batch_size = 64
@@ -1296,8 +1296,159 @@ unet_preprocessing_2:
     early_stopping = EarlyStopping(patience=12, verbose=1)
 	model_checkpoint = ModelCheckpoint(model_file, save_best_only=True, verbose=1)
 	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
-	Highest val_acc: 0.969407958984375
-	Best_val_loss: 0.0926642893254757
-	mAP_max = 0.7492500000000001
-	Horizontal_flip_mAP: 0.759375
-	Notes: Added batch normalization momentum 0.8 after the concatenation layer on the up ladder.
+	Highest val_acc: 0.9709873199462891
+	Best_val_loss: 0.08086606711149216
+	mAP_max = 0.7565000000000001
+	Horizontal_flip_mAP: 0.7595000000000001
+	Notes: Added batch normalization momentum 0.8 after the concatenation layer on the up ladder. This is getting reasonably low losses, but fluctuationing a LOT in the validation loss. Maybe reduce the momentum in the post concatentation layers?
+
+unet_preprocessing_4:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 64
+	generator_dict = {'horizontal_flip': True}
+    early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint(model_file, save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+	Highest val_acc: 0.973685302734375
+	Best_val_loss: 0.08242966711521149
+	mAP_max = 0.7455000000000002
+	Horizontal_flip_mAP: 0.7638750000000001
+	Notes: Same, but changed the momentum in the batch norm in the up ladder after the convolutional upsampling to 0.7, to try to control the validation accuracy fluctuations.
+
+unet_preprocessing_5:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 64
+	generator_dict = {'horizontal_flip': True}
+    early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint(model_file, save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+	Highest val_acc: 0.9705249786376953
+	Best_val_loss: 0.08601910308003426
+	mAP_max = 0.7245
+	Horizontal_flip_mAP: 0.740625
+	Notes: All same as 4, but changed the patience of the learning rate reduction to 3. Next step may be to start Adam at a slightly slower learning rate, we shall see.
+
+unet_preprocessing_6:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 64
+	generator_dict = {'horizontal_flip': True}
+    early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint(model_file, save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+	Highest val_acc: 0.9706210327148438
+	Best_val_loss: 0.08651218131184578
+	mAP_max = 0.7286250000000001
+	Horizontal_flip_mAP: 0.740625
+	Notes: Patience back up to 5. Images now scaled -1 to 1, and mean centered.
+
+unet_preprocessing_7:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 64
+	generator_dict = {'horizontal_flip': True}
+    early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint(model_file, save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+	Highest val_acc: 0.9719384002685547
+	Best_val_loss: 0.08269140750169754
+	mAP_max = 0.7245
+	Horizontal_flip_mAP: 0.75325
+	Notes: Same as 6, but now using standardized images (x - x.mean()) / x.std() if the images aren't zeros, otherwise leave them as zeros.
+
+unet_preprocessing_8:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 64
+	generator_dict = {'horizontal_flip': True}
+    early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint(model_file, save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+	Highest val_acc: 0.9697473907470703
+	Best_val_loss: 0.08931310564279556
+	mAP_max = 0.73275
+	Horizontal_flip_mAP: 0.74775
+	Notes: Same as 6, but now using standardized images (x - x.mean()) / x.std() if the images aren't zeros, otherwise leave them as zeros. Also, divide the standardized by the overall max of the entire array, so all are between -1 and 1, but also keeps the scaling of some images having less variance than others.
+
+unet_preprocessing_9:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 64
+	generator_dict = {'horizontal_flip': True}
+    early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint(model_file, save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+	Highest val_acc: 0.9697473907470703
+	Best_val_loss: 0.08931310564279556
+	mAP_max = 0.73275
+	Horizontal_flip_mAP: 0.74775
+	Notes: Put each image prep method in a different channel, 3 channels total. Channel 1: 0 to 1 scaling. Channel 2: -1 to 1 scaling. Channel 3: Standardized without forcing -1 to 1.
+
+unet_upsamples_1:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 64
+	generator_dict = {'horizontal_flip': True}
+    early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint(model_file, save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+	Highest val_acc: 
+	Best_val_loss: 
+	mAP_max = 
+	Horizontal_flip_mAP: 
+	Notes: Went back to all the same parameters as for preprocessing_4. I used the results of preprocessing_4, saw how it performed on the training set. Then I added 0.1 to all APs. Then dividedby the sum of the APs. This gave me a probability, but kept someprobabilty of sampling everything (once I added in 0.1). I sampled a training vector of 10x the length. I think it rapidly overfits, and we never see any potential minimum, because it happens mid-epoch is my guess.
+
+unet_upsamples_2:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 64
+	generator_dict = {'horizontal_flip': True}
+    early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint(model_file, save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+	Highest val_acc: 0.9670240020751953
+	Best_val_loss: 0.1211321310698986
+	mAP_max = 0.7404999999999999
+	Horizontal_flip_mAP: 0.7495
+	Notes: Same, but this time only upsampled to vector the same length as the original, 1x the length.
+
+unet_upsamples_3:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 64
+	generator_dict = {'horizontal_flip': True}
+    early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint(model_file, save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+	Highest val_acc: 0.9692457580566406
+	Best_val_loss: 0.10206681162118912
+	mAP_max = 0.706875
+	Horizontal_flip_mAP: 0.7232500000000001
+	Notes: Same, but this time only upsampled to vector the same length as the original, 1x the length. Changed the amount added to APs to 0.2
+
+unet_upsamples_3:
+	filter_scaling = 16
+	depth = 5
+	batch_size = 64
+	generator_dict = {'horizontal_flip': True}
+    early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint(model_file, save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+	Highest val_acc: 
+	Best_val_loss: 
+	mAP_max = 
+	Horizontal_flip_mAP: 
+	Notes: Same, but this time only upsampled to vector the same length as the original, 1x the length. Changed the amount added to APs to 0.3
+
+auto_parameter_search_1:
+	For all these, the images were mean centered, but not rescaled to -1,1 range.
+
+	Optimal parameters determined to be:
+		filter_scaling: 48
+		depth: 5
+		batch_size: 64
+
+unet_optimal_parameters_0_to_1_image_scaling:
+	Using these optimal parameters, but now with images 0 to 1 scaled.
