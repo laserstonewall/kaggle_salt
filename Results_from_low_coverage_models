@@ -1,0 +1,79 @@
+Results from low coverage models:
+
+Training the small subset models (64x64):
+
+unet_low_coverage_limit_0.2_1:
+	All samples that are in coverage class 0, 1, 2
+	Threshold, mAP over all classes:
+	(0.6938775510204082, 0.74435318275154)
+	Threshold, mAP over just class 1:
+	(0.3877551020408163, 0.3156521739130435)
+	0.0	292	0.952055	1.0	0.0
+	1.0	115	0.276522	1.0	0.0
+	2.0	59	0.537288	1.0	0.0
+	
+unet_low_coverage_limit_0.2_no_0s_1:
+	Same but didn't allow any class 0 to be in it (i.e. no empty images)
+	Threshold, mAP over all classes:
+	(0.3877551020408163, 0.42685714285714293)
+	Threshold, mAP over just class 1:
+	(0.36734693877551017, 0.3353448275862069)
+	1.0	116	0.335345	1.0	0.0
+	2.0	59	0.606780	1.0	0.0
+
+unet_low_coverage_limit_0.1_no_0s_1
+	Same, but also didn't allow any class 2 (so just training a model on class 1)
+	Threshold, mAP over all classes (same as just over class 1, only that one class)
+	(0.36734693877551017, 0.2974137931034483)
+
+unet_low_coverage_limit_0.1_1:
+	All samples in coverage class 0, 1
+	Threshold, mAP over all classes:
+	(0.6530612244897959, 0.7642523364485981)
+	Threshold, mAP over class 1
+	(0.24489795918367346, 0.27304347826086955)
+	0.0	292	0.989726	1.0	0.0
+	1.0	115	0.148696	1.0	0.0
+
+unet_low_coverage_limit_0.3_no_0s_1:
+	Didn't allow any class 0, keeping classes 1,2,3
+	Threshold, mAP over all classes:
+	(0.3061224489795918, 0.49500000000000005)
+	Threshold, mAP over class 1
+	(0.5918367346938775, 0.29655172413793107)
+	1.0	116	0.286207	1.0	0.0
+	2.0	59	0.657627	1.0	0.0
+	3.0	45	0.820000	1.0	0.0
+
+OK, so want to keep refining the low coverage model. While we lost a bit on the 0.3, we also are doing better on class 2 and class 3 than we do from the other models.
+
+What if we include 0s and up to 3?
+unet_low_coverage_limit_0.3_1
+	Class 0,1,2,3 included
+	Threshold, mAP over all classes:
+	(0.7551020408163265, 0.718421052631579)
+	Threshold, mAP over class 1
+	(0.18367346938775508, 0.2843478260869565)
+	0.0	292	0.965753	1.0	0.0
+	1.0	115	0.200000	1.0	0.0
+	2.0	59	0.527119	1.0	0.0
+	3.0	45	0.557778	1.0	0.0
+
+Let's run another round of our best scoring class 1 case:
+unet_low_coverage_limit_0.2_no_0s_2:
+	Include class 1,2
+	Threshold, mAP over all classes:
+	(0.4081632653061224, 0.42800000000000005)
+	Threshold, mAP over class 1
+	(0.4081632653061224, 0.321551724137931)
+	1.0	116	0.321552	1.0	0.0
+	2.0	59	0.637288	1.0	0.0
+
+Did the same, but elminated the vertical masks:
+unet_low_coverage_limit_0.2_no_0s_novertmasks_1:
+	Threshold, mAP over all classes:
+	(0.3061224489795918, 0.4279069767441861)
+	Threshold, mAP over class 1
+	(0.3061224489795918, 0.3356521739130435)
+	1.0	115	0.335652	1.0	0.0
+	2.0	57	0.614035	1.0	0.0

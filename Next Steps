@@ -9,8 +9,35 @@ Parameter search
 	X Next: batch siz dependence at the discovered maximum: 32, 128, 256
 X AdamW
 Transfer learning
+	First try the VGG-16 architecture, it is very similar to UNet already
+Eliminate vertical masks, what are those?
+Train different models:
+	Vertical mask model
+	Fractional coverage based models:
+		0%
+		(0%, 20%]
+		(20,100]
+		Can decide the barriers based on how my models are doing. Can first judge with the divided up model, then run a known split model with the optimal parameters found for the large images.
+		How to get them to do these models? Train a model where it predicts the level of coverage? Or for images where the main model predicts low coverage, rerun the predictions with the small coverage model? Will need to see how the predictions for the main model turn out.
+		This results in a 0.24 increase over an OK base model. So this may be able to help me quite a bit.
+		Need to try tuning the small model. Could also try training 2 models:
+			One with 0 masks included, and all masks <= 0.1 (or maybe 0.2?)
+			One with just the (0.0, 0.1 masks included).
+			How does including/excluding the 0.0 masks affect things? Could I use my base model, which performs pretty well on completely empty masks, and only use this subset model for the low end?
+			Could also do some evaluation to add nuance, is 0.1 the best or 0.12? Can subdivide SLIGHTLY more although don't want to go crazy because I wont have enough samples.
+			Could I train a model that just tries to predict the coverage category, use this as a discriminator over which model to use?
+			Could I train a model that combines the predictions from the two models? Need to read more about how to do this type of model ensembling.
+Eliminate the vertical masks from the training set, retrain best model, 4 folds.
+	Double check the completely empty masks, don't have to train on those either. May boost score a bit.
+Generalized dice loss, which works better for cases when the covered fraction is smaller.
+Tuning of the stochastic gradient descent / different optimization algorithms
+If we go back to the original, better augmentation. Random cropping? Shift? Horizontal flip seems to help.
+	Same with test time augmentation, can we do better with this?
+Non droput based regularization on the layers (batch normalization is already giving me some regularization)
+Pre-training now that I have added the batch normalization. I feel like this might make it go better.
 Conditional random fields
 Dice loss
+Semi supervised models for augmentation
 
 Principled image augmentation trials.
 Upsample the classes that it is having trouble with.
