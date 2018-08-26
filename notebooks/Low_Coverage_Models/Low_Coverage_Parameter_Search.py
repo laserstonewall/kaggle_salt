@@ -135,7 +135,7 @@ class TTA_ModelWrapper():
         """
 
         pred = []
-        for x_i in tqdm_notebook(X):
+        for x_i in X:
             tmp = x_i
             p0 = self.model.predict(tmp.reshape(1,64,64,1))
             p1 = self.model.predict(np.fliplr(tmp).reshape(1,64,64,1))
@@ -167,7 +167,7 @@ class TTA_ModelWrapper_3channel():
         """
 
         pred = []
-        for x_i in tqdm_notebook(X):
+        for x_i in X:
             tmp = x_i
             p0 = self.model.predict(tmp.reshape(1,128,128,3))
             p1 = self.model.predict(np.fliplr(tmp).reshape(1,128,128,3))
@@ -226,7 +226,7 @@ def write_submission_file(submission_file, preds_test_masks, good_test_images):
     with(open(submission_file,'w')) as f:
         f.write('id,rle_mask')
 
-        for i in tqdm_notebook(range(len(good_test_images))):
+        for i in range(len(good_test_images)):
             image_name = good_test_images[i].split('.')[0]
             pred_mask = preds_test_masks[i,:,:]
             if pred_mask.sum()==0:
@@ -339,8 +339,8 @@ all_image_files = np.array(os.listdir(filter_directory_list(traindir + 'images/'
 good_training_images = all_image_files
 
 ### Load in the images ###
-images_orig = np.array([load_image(traindir + 'images/' + x) for x in tqdm_notebook(good_training_images)])
-masks_orig = np.array([load_mask(traindir + 'masks/' + x) for x in tqdm_notebook(good_training_images)])
+images_orig = np.array([load_image(traindir + 'images/' + x) for x in good_training_images])
+masks_orig = np.array([load_mask(traindir + 'masks/' + x) for x in good_training_images])
 
 ### Find indices of masks where there they are just pure vertical. Have found BAD results with these, and they mess up training ###
 mask_isnt_vertical_indices = [not isvert(x) for x in masks_orig]
@@ -508,7 +508,7 @@ for filter_scaling in filter_scalings:
             iou_thresholds = np.array([0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95])
 
             mAPs = []
-            for threshold in tqdm_notebook(thresholds):
+            for threshold in thresholds:
                 APs = []
                 for i in range(len(preds_orig)):
                     image = val_images_orig[i]
@@ -544,7 +544,7 @@ for filter_scaling in filter_scalings:
             iou_thresholds = np.array([0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95])
 
             mAPs = []
-            for threshold in tqdm_notebook(thresholds):
+            for threshold in thresholds:
                 APs = []
                 for i in range(len(preds_orig_class_1)):
                     image = val_images_orig_cov_class_1[i]
@@ -571,7 +571,7 @@ for filter_scaling in filter_scalings:
             ########### Calculate the coverage dataframe with the max threshold ######################
             #########################################################################################
 
-            preds_val_masks = np.array([pred_to_binary_mask(x, threshold_max) for x in tqdm_notebook(preds_orig)])
+            preds_val_masks = np.array([pred_to_binary_mask(x, threshold_max) for x in preds_orig])
 
             iou_thresholds = np.array([0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95])
             threshold = threshold_max
