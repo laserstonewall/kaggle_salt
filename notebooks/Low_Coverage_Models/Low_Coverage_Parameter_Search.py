@@ -277,9 +277,9 @@ def reassemble_chopped(x1, x2, x3, x4):
     result[50:,50:] = x4[7:7+51,7:7+51]
     return result
 
-def unet_model(filter_scaling=16, depth=5, batch_norm_momentum=0.6, optimizer='adam'):
+def unet_model(filter_scaling=16, depth=5, batch_norm_momentum=0.6):
 
-    input_layer = Input((128,128,1))
+    input_layer = Input((64,64,1))
 
     conv_initialization_dict = {"activation":'relu', 
                                 "padding":'same',
@@ -296,9 +296,12 @@ def unet_model(filter_scaling=16, depth=5, batch_norm_momentum=0.6, optimizer='a
             x = Conv2D((2**(i-1)) * filter_scaling, (3,3), **conv_initialization_dict_no_activation)(x)
         x = Activation('relu')(x)     
         x = BatchNormalization(momentum=batch_norm_momentum)(x)
+    #     x = Dropout(0.2)(x)
+    #     x = Dropout(0.25)(x)
         conv_dict[i] = Conv2D((2**(i-1)) * filter_scaling, (3,3), **conv_initialization_dict_no_activation)(x)
         x = Activation('relu')(x)
         x = BatchNormalization(momentum=batch_norm_momentum)(x)
+    #     x = Dropout(0.2)(x)
 
         x = MaxPooling2D((2,2), padding='same')(conv_dict[i])
 
@@ -316,15 +319,17 @@ def unet_model(filter_scaling=16, depth=5, batch_norm_momentum=0.6, optimizer='a
         x = BatchNormalization(momentum=batch_norm_momentum)(x)
         x = Conv2D((2**(i-1)) * filter_scaling, (3,3), **conv_initialization_dict)(x)
         x = BatchNormalization(momentum=batch_norm_momentum)(x)
+    #     x = Dropout(0.2)(x)
         x = Conv2D((2**(i-1)) * filter_scaling, (3,3), **conv_initialization_dict)(x)
         if i!=1:
             x = BatchNormalization(momentum=batch_norm_momentum)(x)
+    #         x = Dropout(0.2)(x)
 
     output_layer = Conv2D(1, (1,1), activation='sigmoid', padding='same')(x)
 
     model = Model(input_layer, output_layer)
 
-    model.compile(loss="binary_crossentropy", optimizer=optimizer, metrics=["accuracy"])
+    model.compile(loss="binary_crossentropy", optimizer="adam", metrics=["accuracy"])
 
     return model
 
