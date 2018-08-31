@@ -1,0 +1,23 @@
+Model_results_2
+
+Starting this with the effort to combine the low model and the main model. Have found "optimal" parameters for each.
+
+unet_optimal_parameters_m1_to_1_no_vertical_masks_fs_48_d_5_bs_64_bn_0.6_fold_1 (2,3,4):
+	The main model for scoring 0.0 predicted coverage and > 0.2 coverage categories. In the previous optimal trained model, I left in the vertical masks, which may tend to screw things up. The one thing about these models that may not be optimal, I used patience = 5 for the learning rate decay, I had started using 3 after I felt that it tended to overfit less. Another thing to optimize.
+	Filter_scaling = 48
+	Depth = 5
+	Batch size = 64
+	Batch normalization momentum = 0.6
+    early_stopping = EarlyStopping(patience=12, verbose=1)
+    model_checkpoint = ModelCheckpoint(model_file, save_best_only=True, verbose=1)
+    reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+
+unet_optimal_parameters_m1_to_1_no_vertical_masks_patience_3_fs_48_d_5_bs_64_bn_0.6_fold_1 (2,3,4):
+	The same as above, but I reduced the patience to try to increase the model performance. I think sometimes the training starts to overfit before the learning rate is reduced enough to make the validation go down. Or something like that.
+	Filter_scaling = 48
+	Depth = 5
+	Batch size = 64
+	Batch normalization momentum = 0.6
+    early_stopping = EarlyStopping(patience=10, verbose=1)
+    model_checkpoint = ModelCheckpoint(model_file, save_best_only=True, verbose=1)
+    reduce_lr = ReduceLROnPlateau(factor=0.2, patience=3, min_lr=1e-6, verbose=1)

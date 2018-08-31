@@ -1,5 +1,14 @@
 NEXT FIRST STEP: Look at the depth of the bad examples that I am getting wrong, see if that is a strongly explanatory variable.
 
+Concrete next steps:
+1. Make ensembled predictions for 0.2 downwards (except 0). Have to decide on the model. Balanced across the two classes? Maybe 48,5? 64,6? 64,5?
+	For the first submission, use the main module for all 0 masks, and for 0.2 and greater. Use the chopped 64x64 model for (0,0.2]
+2. Train eliminating extremely small coverage like 1 pixel. What even is that.
+2a. Use the 1 class threshold, doing the 0.2 or 0.1 threshold, 0.2 brought the score down. So use the better threshold for 0.1, since the 0.2 isn't being helped by the generic threshold anyway.
+2b. Use the 0.2 optimized model for 0.1 to 0.2.
+3. Evaluate how the "best model" you just submitted performed on the validation sets, over the coverage profiles.
+
+Thoughts on Next Steps:
 X Individual image mean centering
 X Preprocess -1 to 1
 X Preprocess standard scaling
@@ -27,6 +36,9 @@ Train different models:
 			Could also do some evaluation to add nuance, is 0.1 the best or 0.12? Can subdivide SLIGHTLY more although don't want to go crazy because I wont have enough samples.
 			Could I train a model that just tries to predict the coverage category, use this as a discriminator over which model to use?
 			Could I train a model that combines the predictions from the two models? Need to read more about how to do this type of model ensembling.
+			I am starting to find that different models perform well for different coverage amounts. A slightly deeper model does better for the tier 2, while slightly shallower does better for tier 1. Coverage category 1 is twice as large, so I will start with using that optimized model.
+			For tier 0, it may make sense to use one of the models that performed better on these, and only use its predictions if it predicts a 0. Because 0 are the biggest category, and a small increase in accuracy there will mean a big difference in the overall score. Of course, these models may tend to over assign 0s, so we may lose accuracy on the low coverage ones. We will need to test various combinations.
+Train on further subdivided model, 32x32 (divide by 4)
 Eliminate the vertical masks from the training set, retrain best model, 4 folds.
 	Double check the completely empty masks, don't have to train on those either. May boost score a bit.
 Generalized dice loss, which works better for cases when the covered fraction is smaller.

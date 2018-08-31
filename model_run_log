@@ -1452,3 +1452,96 @@ auto_parameter_search_1:
 
 unet_optimal_parameters_0_to_1_image_scaling:
 	Using these optimal parameters, but now with images 0 to 1 scaled.
+
+Did some image optimization with many folds, should be recorded in my augmentation ipynb.
+
+NOW TRYING TRANSFER LEARNING:
+unet_transfer_vgg16_bs_64_freeze_11_1:
+	Using VGG_16 as the base network.
+	Freezing all base model layers before 11, all rest are trainable.
+	val_acc: 0.9619607543945312
+	val_loss: 0.10000643134117126
+	mAP_max: 0.6651249999999999
+	mAP_max_aug: 0.684875
+
+unet_transfer_vgg16_bs_64_freeze_7_1:
+	Freezing all base model layers before 7, all rest are trainable.
+	val_acc: 0.9516852569580078
+	val_loss: 0.1265932500362396
+	mAP_max: 0.4997499999999999
+	mAP_max_aug: 0.535
+	Notes: Didn't initiate either of the last two runs with the he_normal weights I have been using. Will need to rerun and see if this helps.
+
+unet_transfer_vgg16_bs_64_freeze_11_caffe_scaling_1:
+	Same as 11 above, but using the caffe scaling instead, with input on range 0 to 255, but mean scaled.
+	This didn't train at all. This scaling is probably wrong. I am trying one more thing though. Put batch normalization in all layers from the bottom on up. Perhaps there was a problem getting everything to the right scale and then producing a mask?
+
+unet_transfer_vgg16_bs_64_freeze_11_caffe_scaling_2:
+	The same, with the batch normalization layers after every convolution (except the last)
+	early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint(model_file, save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=5, min_lr=1e-6, verbose=1)
+	learning_rec= LearningRateHistory()
+	val_acc: missed
+	val_loss: missed
+	mAP_max: 0.6933750000000001
+	mAP_max_aug: 0.70175
+	I get the feeling decreasing the patience a bit on the learning rate reduction might help things along.
+
+unet_transfer_vgg16_bs_64_freeze_11_caffe_scaling_3:
+	Turned the patience down to 3.
+	early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint(model_file, save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=3, min_lr=1e-6, verbose=1)
+	learning_rec= LearningRateHistory()
+	val_acc: 0.9640843963623047
+	val_loss: 0.09429426729679108
+	mAP_max: 0.6963749999999999
+	mAP_max_aug: 0.7102499999999999
+	
+unet_transfer_vgg16_bs_64_freeze_11_caffe_scaling_4:
+	The same, but initialized everything with he_normal. Also the Conv2DTranspose layers now have ReLU activation, their default is linear a(x) = x. This matches how I had it set up for the most successful models from my UNet from scratch models.
+	early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint(model_file, save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=3, min_lr=1e-6, verbose=1)
+	learning_rec= LearningRateHistory()
+	val_acc: 0.9696622467041016
+	val_loss: 0.0814356517791748
+	mAP_max: 0.722
+	mAP_max_aug: 0.7340000000000001
+
+unet_transfer_vgg16_bs_64_freeze_15_caffe_scaling_1:
+	Same, but locking up to layer 15 as non-trainable. Going from 7 to 11 increased a lot, so hopefully this helps too.
+	early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint(model_file, save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=3, min_lr=1e-6, verbose=1)
+	learning_rec= LearningRateHistory()
+	val_acc: 0.9651922607421874
+	val_loss: 0.10234962284564972
+	mAP_max: 0.72125
+	mAP_max_aug: 0.7361249999999999
+
+OK, so I think my network was a little deeper for my best results. Making the bottom 2 layers 1024 with batch normalization. Killing the bottom VGG16 layers, taking everything from vgg16 block4_pool, then adding a 2x1024 bottom, then going back up. Basically trying to find out if there is a better geometry before I start really fooling around tuning things.
+
+unet_transfer_vgg16_bs_64_freeze_11_block4_maxpool_to_1024_bottom_1:
+	early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint(model_file, save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=3, min_lr=1e-6, verbose=1)
+	learning_rec= LearningRateHistory()
+	val_acc: 0.9684822082519531
+	val_loss: 0.08334169507026673
+	mAP_max: 0.731875
+	mAP_max_aug: 0.7395
+
+unet_transfer_vgg16_bs_64_freeze_11_block4_maxpool_to_1024_bottom_2:
+	Same, but in the 512 and 256 upladders, added an extra convolution - batch normalization layer, to mirror the down ladder, which has three convolutional layers in each of these layers.
+
+	early_stopping = EarlyStopping(patience=12, verbose=1)
+	model_checkpoint = ModelCheckpoint(model_file, save_best_only=True, verbose=1)
+	reduce_lr = ReduceLROnPlateau(factor=0.2, patience=3, min_lr=1e-6, verbose=1)
+	learning_rec= LearningRateHistory()
+	val_acc: 0.9675624084472656
+	val_loss: 0.08537339627742767
+	mAP_max: 0.72725
+	mAP_max_aug: 0.73225
+
