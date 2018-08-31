@@ -382,23 +382,24 @@ coverage_category = coverage_category[low_coverage_indices]
 batch_norm_momentum = 0.6
 number_folds = range(1,5)
 
-filter_scalings = [32, 48, 64]
-depths = [4,5,6]
+filter_scalings = [96,112,128]
+depths = [4]#,5,6]
+
 batch_size = 64
 
 record_file = "low_coverage_parameter_comparison_1.csv"
-if os.path.exists(record_file):
-    raise ValueError("Record file already exists")
+#if os.path.exists(record_file):
+#    raise ValueError("Record file already exists")
     
-record_header = "filter_scaling,depth,batch_size,fold,batch_norm_momentum,final_epoch,random_seed,highest_val_acc,lowest_val_loss" + \
-                            "threshold_max,mAP_max,threshold_max_class_1,mAP_max_class_1"
-with(open(record_file,'w')) as f:
-    f.write(record_header)
+#record_header = "filter_scaling,depth,batch_size,fold,batch_norm_momentum,final_epoch,random_seed,highest_val_acc,lowest_val_loss" + \
+#                            "threshold_max,mAP_max,threshold_max_class_1,mAP_max_class_1"
+#with(open(record_file,'w')) as f:
+#    f.write(record_header)
 
 for filter_scaling in filter_scalings:
     for depth in depths:
         for fold in number_folds:
-
+            K.clear_session()
             ##########################################################################################
             ###### Create the current train / test setups ###########################################
             ########################################################################################
