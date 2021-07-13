@@ -1,0 +1,20 @@
+name: unet_salt
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python>=3.7
+  - cudatoolkit=10.2 
+  - ipython=7.1.1
+  - prompt_toolkit==2.0.10
+  - notebook
+  - jupyter
+  - numpy
+  - pandas
+  - scikit-learn=0.24.2
+  - scikit-image
+  - pip
+  - pip:
+    - .
+    - tensorflow==1.15
+    - keras==2.3.1
